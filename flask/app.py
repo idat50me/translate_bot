@@ -77,7 +77,7 @@ def event_reactions_get(event, say):
         translate_text = messages[0]['text']
         reactions = messages[0]['reactions']
 
-        logging.info(f'messages: {messages}, reactions: {reactions}')
+        logging.info(f'text: {translate_text}, reactions: {reactions}')
 
         start_en_postmessage = False
         start_jp_postmessage = False
