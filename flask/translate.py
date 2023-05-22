@@ -2,6 +2,7 @@
 # from dotenv import load_dotenv
 # import deepl
 from translate_shell.translate import translate
+import re
 
 # .envファイルの内容を読み込見込む
 # load_dotenv()
@@ -34,9 +35,33 @@ def translate_lines(text: str, source_lang, target_lang):
         if l == "":
             result_lines.append("")
         else:
-            result_lines.append(translate(l, target_lang=target_lang, source_lang=source_lang).results[0]["paraphrase"])
+            l, repl = replace_url_string(l)
+            translated_l = translate(l, target_lang=target_lang, source_lang=source_lang).results[0]["paraphrase"]
+            translated_l = undo_replaced_string(translated_l, repl)
+            result_lines.append(translated_l)
+
     result = "\n".join(result_lines)
     return result
+
+def replace_url_string(text: str):
+    repl_strs = {}
+    url_matches = re.findall(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", text)
+    rac_matches = re.findall(r":[\w\-]+:", text)
+    for i, repl_from in enumerate(url_matches):
+        repl_to = f"{{{{ URL{i:02d} }}}}"
+        text = text.replace(repl_from, repl_to)
+        repl_strs[repl_to] = repl_from
+    for i, repl_from in enumerate(rac_matches):
+        repl_to = f"{{{{ RAC{i:02d} }}}}"
+        text = text.replace(repl_from, repl_to)
+        repl_strs[repl_to] = repl_from
+    
+    return text, repl_strs
+
+def undo_replaced_string(text: str, repl_strs: dict):
+    for repl_from, repl_to in repl_strs.items():
+        text = text.replace(repl_from, repl_to)
+    return text
 
 if __name__ == '__main__':
     test = 'これは日本語です'
