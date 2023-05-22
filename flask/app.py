@@ -17,10 +17,12 @@ load_dotenv()
 # logging.basicConfig(level=logging.INFO, filename="logging.log")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-fmt = logging.Formatter("%(asctime)s %(message)s")
+fmt = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s: %(message)s")
 log_handler = logging.FileHandler("app.log")
 log_handler.setFormatter(fmt)
 logger.addHandler(log_handler)
+
+logger.info("This is app.py logger!")
 
 # app = App()
 app = App(
@@ -77,7 +79,7 @@ def event_reactions_get(event, say):
         translate_text = messages[0]['text']
         reactions = messages[0]['reactions']
 
-        logging.info(f'text: {translate_text}, reactions: {reactions}')
+        logger.info(f'text: {translate_text}, reactions: {reactions}')
 
         start_en_postmessage = False
         start_jp_postmessage = False
@@ -98,7 +100,7 @@ def event_reactions_get(event, say):
         elif start_en_postmessage:
             text = str(en_jp_translate(translate_text))
 
-        logging.info(f'translated_text: {text}')
+        logger.info(f'translated_text: {text}')
 
         attachments = json.dumps([
             {
@@ -117,14 +119,14 @@ def event_reactions_get(event, say):
 
 handler = SlackRequestHandler(app)
 
-@flask_app.route("/")
+@flask_app.route("/slack_translate") # nignx.conf の location と一致させる
 def index():
     return "Hello flask!"
 
-@flask_app.route("/slack/events", methods=["POST"])
+@flask_app.route("/slack_translate/events", methods=["POST"])
 def slack_events():
     p = request.json
-    logging.debug(p)
+    logger.debug(p)
     if p["token"] == os.environ["VERIFICATION_TOKEN"] and p["type"] == "url_verification": # verify用
         return p["challenge"]
     return handler.handle(request)
